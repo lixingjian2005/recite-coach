@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 2026-06-20 00:00:00 +08:00 Original title retained:
+<title>Recite Coach</title>
+-->
+<title>手卡背诵</title>
+<style>
+  /* ── Design Tokens ── */
+  :root {
+    --bg: #0f0f1a;
+    --bg-mesh: radial-gradient(ellipse at 50% 0%, #1a1a3a 0%, transparent 60%);
+    --card-bg: rgba(22, 33, 62, 0.85);
+    --card-border: rgba(255, 255, 255, 0.06);
+    --accent: #f04b6a;
+    --accent-glow: rgba(240, 75, 106, 0.25);
+    --gold: #f5c518;
+    --green: #4ecca3;
+    --green-glow: rgba(78, 204, 163, 0.3);
+    --blue: #5b9bd5;
+    --text: #e6e6ec;
+    --text-dim: #9098a8;
+    --border: rgba(255, 255, 255, 0.08);
+
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+
+    --shadow-card:
+      0 1px 2px rgba(0,0,0,.4),
+      0 8px 32px rgba(0,0,0,.45),
+      0 0 0 1px rgba(255,255,255,.03) inset;
+    --shadow-card-hover: 0 12px 48px rgba(0,0,0,.55);
+
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Inter", "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    background:
+      var(--bg-mesh),
+      linear-gradient(180deg, #111128 0%, #0f0f1a 100%);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    overflow-y: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ── Layout ── */
+  .app {
+    width: 100%;
+    max-width: 720px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-dim);
+    padding: 0 4px;
+  }
+  .topbar .title { font-weight: 650; color: var(--text); font-size: 15px; letter-spacing: -.01em; }
+
+  /* ── Box indicators ── */
+  .boxes { display: flex; gap: 8px; }
+  .box-dot {
+    width: 30px; height: 30px; border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    background: rgba(255,255,255,.04);
+    color: var(--text-dim);
+    transition: all .3s var(--ease-smooth);
+    position: relative;
+  }
+  .box-dot.active {
+    background: linear-gradient(135deg, #e94560, #d63050);
+    color: #fff;
+    box-shadow: 0 4px 14px var(--accent-glow);
+    transform: scale(1.08);
+  }
+  .box-dot.mastered {
+    background: linear-gradient(135deg, #3dbf87, #2ea870);
+    color: #062016;
+    box-shadow: 0 4px 14px var(--green-glow);
+  }
+
+  /* ── Progress bar ── */
+  .progress-wrap {
+    height: 6px;
+    background: rgba(255,255,255,.05);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), #34d399);
+    border-radius: 3px;
+    transition: width .5s var(--ease-smooth);
+    box-shadow: 0 0 10px var(--green-glow);
+  }
+
+  /* ── Card ── */
+  .card-container { perspective: 1200px; }
+  .card {
+    position: relative;
+    min-height: 380px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    padding: 40px 36px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: transform .35s var(--ease-smooth), box-shadow .35s var(--ease-smooth);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  /* Top accent bar */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 12px; right: 12px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--gold), var(--accent));
+    opacity: .7;
+    border-radius: 0 0 3px 3px;
+  }
+  .card.flipping { transform: rotateY(90deg); }
+  .card-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 2.5px;
+    color: var(--accent); margin-bottom: 14px; font-weight: 700;
+  }
+  .card-title {
+    font-size: 24px; font-weight: 700; margin-bottom: 20px;
+    color: #fff; line-height: 1.5;
+  }
+  .card-content {
+    font-size: 16px; line-height: 1.9; color: var(--text-dim);
+    white-space: pre-wrap;
+  }
+  .card-content .blank {
+    display: inline-block; min-width: 64px;
+    border-bottom: 2px dashed var(--accent);
+    margin: 0 4px; padding: 2px 10px; color: var(--accent);
+  }
+  .card-mnemonic {
+    margin-top: 24px; padding: 16px 20px;
+    background: rgba(240,75,106,.06);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-sm);
+    font-size: 14px; color: var(--gold);
+    line-height: 1.6;
+  }
+  .card-mnemonic::before { content: "💡 口诀: "; font-size: 12px; color: var(--text-dim); }
+
+  /* ── Test input ── */
+  .answer-area { margin-top: 24px; display: none; }
+  .answer-area.show { display: block; }
+  .answer-input {
+    width: 100%; padding: 14px 18px; font-size: 16px;
+    background: rgba(255,255,255,.04);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    color: #fff; outline: none;
+    font-family: inherit; transition: border-color .25s var(--ease-smooth), box-shadow .25s var(--ease-smooth);
+  }
+  .answer-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(240,75,106,.1);
+  }
+  .answer-feedback {
+    margin-top: 12px; font-size: 14px; line-height: 1.6;
+    display: none;
+  }
+  .answer-feedback.show { display: block; }
+  .feedback-correct { color: var(--green); }
+  .feedback-wrong { color: var(--accent); }
+  .correct-answer { color: var(--gold); font-weight: 600; }
+
+  /* ── Hints ── */
+  .hints { margin-top: 14px; display: none; font-size: 13px; }
+  .hints.show { display: block; }
+  .hint-btn {
+    background: none; border: 1px solid var(--border); color: var(--text-dim);
+    padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px;
+    margin-right: 8px; transition: all .25s var(--ease-smooth);
+  }
+  .hint-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(240,75,106,.06);
+  }
+  .hint-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .hint-text { margin-top: 10px; color: var(--gold); font-size: 13px; line-height: 1.6; }
+
+  /* ── Rating buttons ── */
+  .rating-row {
+    display: none; gap: 10px; margin-top: 28px; flex-wrap: wrap;
+  }
+  .rating-row.show { display: flex; }
+  .rate-btn {
+    flex: 1; min-width: 70px; padding: 14px 8px; border-radius: var(--radius-md);
+    border: none; cursor: pointer; font-size: 13px; font-weight: 700;
+    transition: all .2s var(--ease-smooth); color: #fff; letter-spacing: .5px;
+    position: relative; overflow: hidden;
+  }
+  .rate-btn::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,.15) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .rate-btn.again { background: linear-gradient(135deg, #c0392b, #a93226); }
+  .rate-btn.hard  { background: linear-gradient(135deg, #e67e22, #d35400); }
+  .rate-btn.good  { background: linear-gradient(135deg, #27ae60, #1e8449); }
+  .rate-btn.easy  { background: linear-gradient(135deg, #2980b9, #1a5276); }
+  .rate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,.35);
+  }
+  .rate-btn:active { transform: translateY(0); }
+  .rate-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .rate-key { font-size: 10px; opacity: .65; display: block; margin-top: 2px; }
+
+  /* ── Bottom bar ── */
+  .bottombar {
+    display: flex; justify-content: center; gap: 16px;
+    font-size: 12px; color: var(--text-dim);
+  }
+  .key-hint {
+    padding: 5px 12px; border-radius: 5px;
+    background: rgba(255,255,255,.05);
+    font-family: "SF Mono", "Cascadia Code", "Fira Code", monospace;
+    font-size: 11px;
+    border: 1px solid rgba(255,255,255,.06);
+  }
+
+  /* ── Completion ── */
+  .complete {
+    text-align: center; padding: 48px 24px;
+  }
+  .complete h2 {
+    font-size: 30px;
+    background: linear-gradient(135deg, var(--green), #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 18px;
+    font-weight: 800;
+  }
+  .complete p { color: var(--text-dim); font-size: 15px; line-height: 1.8; }
+  .reset-btn {
+    margin-top: 28px; padding: 14px 36px;
+    background: linear-gradient(135deg, var(--accent), #d63050);
+    color: #fff; border: none;
+    border-radius: var(--radius-md); font-size: 15px; font-weight: 700; cursor: pointer;
+    transition: all .25s var(--ease-smooth);
+    box-shadow: 0 4px 16px var(--accent-glow);
+  }
+  .reset-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(240,75,106,.35);
+  }
+  .reset-btn:active { transform: translateY(0); }
+  .reset-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+  /* ── Reset nav button ── */
+  .reset-nav-btn {
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 4px 10px; border-radius: 5px;
+    cursor: pointer; font-size: 11px;
+    transition: all .2s var(--ease-smooth);
+  }
+  .reset-nav-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(240,75,106,.06);
+  }
+
+  /* ── Demo mode banner ── */
+  .demo-banner {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 14px; margin-bottom: 2px;
+    background: rgba(245,197,24,.08);
+    border: 1px solid rgba(245,197,24,.2);
+    border-radius: var(--radius-sm);
+    font-size: 12px; color: var(--gold);
+    animation: slideUpFade .3s var(--ease-smooth) both;
+  }
+  .demo-banner code {
+    background: rgba(245,197,24,.10);
+    padding: 1px 6px; border-radius: 3px;
+    font-size: 11px;
+  }
+
+  /* ── No data ── */
+  .no-data {
+    text-align: center; padding: 60px 20px;
+  }
+  .no-data h2 { color: var(--text-dim); margin-bottom: 12px; font-size: 20px; }
+  .no-data p { color: var(--text-dim); font-size: 14px; line-height: 1.8; }
+  .no-data .placeholder-json {
+    margin-top: 20px; padding: 20px;
+    background: var(--card-bg); border: 1px dashed var(--border);
+    border-radius: var(--radius-md); text-align: left; font-size: 12px;
+    color: var(--text-dim); white-space: pre-wrap; font-family: "SF Mono", "Cascadia Code", monospace;
+    max-height: 400px; overflow-y: auto;
+  }
+
+  /* ── Animations ── */
+  @keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card-content, .card-title, .card-mnemonic {
+    animation: slideUpFade .4s var(--ease-smooth) both;
+  }
+  .card-title     { animation-delay: .04s; }
+  .card-content   { animation-delay: .1s; }
+  .card-mnemonic  { animation-delay: .18s; }
+
+  /* ── Accessibility: reduced motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* ── Focus visible ── */
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 500px) {
+    .card { padding: 28px 22px; min-height: 300px; }
+    .card-title { font-size: 19px; }
+    .card-content { font-size: 14px; }
+    .rate-btn { font-size: 12px; padding: 12px 6px; }
+    .app { padding: 12px; gap: 12px; }
+  }
+
+  /*
+    2026-06-20 00:00:00 +08:00
+    Mature application UI override.
+    Original neon/gradient visual system above is retained for traceability.
+  */
+  :root {
+    --bg: #f5f5f2;
+    --bg-mesh: none;
+    --card-bg: #ffffff;
+    --card-border: #d9d6cc;
+    --accent: #1f4f46;
+    --accent-glow: transparent;
+    --gold: #7a5c16;
+    --green: #2f6f4e;
+    --green-glow: transparent;
+    --blue: #395b7a;
+    --text: #24231f;
+    --text-dim: #6f6a60;
+    --border: #d9d6cc;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --shadow-card: 0 1px 2px rgba(25, 24, 20, .06), 0 10px 28px rgba(25, 24, 20, .08);
+    --shadow-card-hover: 0 10px 28px rgba(25, 24, 20, .08);
+    --ease-bounce: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  body {
+    background: var(--bg);
+    align-items: flex-start;
+    padding: 28px 0;
+  }
+
+  .app {
+    max-width: 760px;
+    gap: 12px;
+  }
+
+  .topbar {
+    padding: 0;
+    font-size: 12px;
+  }
+
+  .topbar .title {
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 650;
+    letter-spacing: 0;
+  }
+
+  .boxes {
+    gap: 6px;
+  }
+
+  .box-dot {
+    width: auto;
+    min-width: 56px;
+    height: 28px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: #ece9e1;
+    border: 1px solid #dedacf;
+    color: var(--text-dim);
+    font-weight: 600;
+    transform: none;
+  }
+
+  .box-dot.active {
+    background: #e1ebe7;
+    border-color: #b7cdc4;
+    color: var(--accent);
+    box-shadow: none;
+    transform: none;
+  }
+
+  .box-dot.mastered {
+    background: #dce8df;
+    border-color: #a9c5b4;
+    color: #28563d;
+    box-shadow: none;
+  }
+
+  .progress-wrap {
+    height: 4px;
+    background: #e5e1d8;
+  }
+
+  .progress-fill {
+    background: var(--accent);
+    box-shadow: none;
+  }
+
+  .card-container {
+    perspective: none;
+  }
+
+  .card {
+    min-height: 390px;
+    padding: 34px 36px;
+    justify-content: flex-start;
+    color: var(--text);
+  }
+
+  .card.result-card {
+    /*
+      2026-06-20 00:00:00 +08:00 Original result state inherited:
+      min-height: 390px;
+    */
+    min-height: 0;
+    padding-bottom: 28px;
+  }
+
+  .card::before {
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #1f4f46;
+    opacity: 1;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .card.flipping {
+    transform: none;
+  }
+
+  .card-label {
+    color: var(--accent);
+    letter-spacing: .08em;
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+
+  .card-title {
+    color: var(--text);
+    font-size: 25px;
+    font-weight: 680;
+    line-height: 1.45;
+    margin-bottom: 18px;
+  }
+
+  .card-content {
+    color: #3d3a34;
+    line-height: 1.85;
+  }
+
+  .card.result-card .card-title {
+    /*
+      2026-06-20 00:00:00 +08:00 Original title spacing inherited:
+      margin-bottom: 18px;
+    */
+    margin-bottom: 16px;
+  }
+
+  .card.result-card .card-content {
+    white-space: normal;
+    line-height: 1.65;
+  }
+
+  .card-content .blank {
+    border-bottom-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .card-mnemonic {
+    margin-top: 22px;
+    padding: 12px 14px;
+    background: #f7f4ea;
+    border: 1px solid #e4dcc5;
+    border-left: 4px solid #b08a2a;
+    border-radius: var(--radius-sm);
+    color: #60480f;
+  }
+
+  .card-mnemonic::before {
+    content: "背诵口诀：";
+    font-size: 13px;
+    color: #6b6255;
+    font-weight: 600;
+  }
+
+  .answer-input {
+    background: #fbfaf7;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text);
+    box-shadow: none;
+  }
+
+  .answer-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(31, 79, 70, .12);
+  }
+
+  .hint-btn,
+  .reset-nav-btn {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  .hint-btn:hover,
+  .reset-nav-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: #f6f7f3;
+  }
+
+  .hint-text {
+    color: #63511c;
+  }
+
+  .rate-btn {
+    border: 1px solid transparent;
+    box-shadow: none;
+    color: #fff;
+    letter-spacing: 0;
+  }
+
+  .rate-btn::after {
+    content: none;
+  }
+
+  .rate-btn.again { background: #8b3a34; }
+  .rate-btn.hard  { background: #9a6a24; }
+  .rate-btn.good  { background: #2f6f4e; }
+  .rate-btn.easy  { background: #315f7c; }
+
+  .rate-btn:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(25, 24, 20, .14);
+  }
+
+  .bottombar {
+    justify-content: flex-start;
+    color: var(--text-dim);
+  }
+
+  .key-hint {
+    background: #ece9e1;
+    border-color: #dedacf;
+    color: #4f4a42;
+  }
+
+  .complete {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+  }
+
+  .complete h2 {
+    background: none;
+    -webkit-text-fill-color: var(--text);
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .reset-btn {
+    background: var(--accent);
+    box-shadow: none;
+    border-radius: var(--radius-md);
+  }
+
+  .reset-btn:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(25, 24, 20, .14);
+  }
+
+  .demo-banner {
+    background: #fff8df;
+    border-color: #e5d39b;
+    color: #5f4b13;
+    animation: none;
+  }
+
+  .demo-banner code {
+    background: rgba(122, 92, 22, .10);
+  }
+
+  .no-data {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+  }
+
+  .no-data h2 {
+    color: var(--text);
+  }
+
+  .card-content,
+  .card-title,
+  .card-mnemonic {
+    animation: none;
+  }
+
+  @media (max-width: 500px) {
+    body { padding: 10px 0; }
+    .card { padding: 26px 20px; min-height: 330px; }
+    .boxes { overflow-x: auto; padding-bottom: 2px; }
+    .box-dot { min-width: 50px; }
+  }
+
+  /*
+    2026-06-20 00:00:00 +08:00
+    Dark exam-mode UI override based on option 9.
+    Original light mature-application override above is retained for traceability.
+  */
+  :root {
+    --bg: #0d1117;
+    --bg-mesh:
+      radial-gradient(circle at 18% 0%, rgba(56, 139, 253, .10), transparent 34%),
+      radial-gradient(circle at 88% 12%, rgba(63, 185, 80, .06), transparent 28%);
+    --card-bg: #161b22;
+    --card-border: #30363d;
+    --accent: #58a6ff;
+    --accent-glow: rgba(88, 166, 255, .16);
+    --gold: #d29922;
+    --green: #7ee787;
+    --green-glow: rgba(126, 231, 135, .14);
+    --blue: #79c0ff;
+    --text: #f0f6fc;
+    --text-dim: #a8b3c1;
+    --border: #30363d;
+    --shadow-card:
+      0 18px 42px rgba(0, 0, 0, .36),
+      0 0 0 1px rgba(240, 246, 252, .04);
+  }
+
+  body {
+    background:
+      var(--bg-mesh),
+      linear-gradient(180deg, #0d1117 0%, #090d13 100%);
+    color: var(--text);
+    padding: 28px 0;
+  }
+
+  .app {
+    max-width: 780px;
+    gap: 13px;
+  }
+
+  .topbar {
+    color: var(--text-dim);
+  }
+
+  .topbar .title {
+    color: var(--text);
+  }
+
+  .box-dot {
+    background: #161b22;
+    border-color: #30363d;
+    color: #9da7b3;
+  }
+
+  .box-dot.active {
+    background: #10233a;
+    border-color: #2f6fab;
+    color: #79c0ff;
+  }
+
+  .box-dot.mastered {
+    background: #12271d;
+    border-color: #2f7d4f;
+    color: #7ee787;
+  }
+
+  .progress-wrap {
+    background: #21262d;
+  }
+
+  .progress-fill {
+    background: linear-gradient(90deg, #2f81f7, #56d364);
+  }
+
+  .card {
+    background:
+      linear-gradient(180deg, rgba(22, 27, 34, .98), rgba(13, 17, 23, .98)) padding-box,
+      linear-gradient(180deg, #3d444d 0%, #21262d 42%, #0d1117 100%) border-box;
+    border: 10px solid transparent;
+    border-radius: 14px;
+    color: var(--text);
+    box-shadow:
+      var(--shadow-card),
+      inset 0 1px 0 rgba(240, 246, 252, .05),
+      inset 0 -1px 0 rgba(0, 0, 0, .32);
+  }
+
+  .card::before {
+    height: 3px;
+    left: 10px;
+    right: 10px;
+    background: linear-gradient(90deg, #58a6ff, #7ee787);
+    opacity: .95;
+    border-radius: 0 0 4px 4px;
+  }
+
+  .card.result-card {
+    border-width: 8px;
+  }
+
+  .card-label {
+    color: #79c0ff;
+  }
+
+  .card-title {
+    color: #f0f6fc;
+  }
+
+  .card-content {
+    color: #c9d1d9;
+  }
+
+  .card-content .blank {
+    border-bottom-color: #58a6ff;
+    color: #79c0ff;
+  }
+
+  .card-mnemonic {
+    background: rgba(187, 128, 9, .10);
+    border-color: rgba(210, 153, 34, .34);
+    border-left-color: #d29922;
+    color: #e3b341;
+  }
+
+  .card-mnemonic::before {
+    color: #b7bdc6;
+  }
+
+  .answer-input {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #f0f6fc;
+  }
+
+  .answer-input::placeholder {
+    color: #7d8590;
+  }
+
+  .answer-input:focus {
+    border-color: #58a6ff;
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, .16);
+  }
+
+  .hint-btn,
+  .reset-nav-btn {
+    background: #161b22;
+    border-color: #30363d;
+    color: #c9d1d9;
+  }
+
+  .hint-btn:hover,
+  .reset-nav-btn:hover {
+    border-color: #58a6ff;
+    color: #79c0ff;
+    background: #0f1b2d;
+  }
+
+  .hint-text {
+    color: #d29922;
+  }
+
+  .rate-btn.again { background: #da3633; color: #fff; }
+  .rate-btn.hard  { background: #9e6a03; color: #fff; }
+  .rate-btn.good  { background: #238636; color: #fff; }
+  .rate-btn.easy  { background: #1f6feb; color: #fff; }
+
+  .rate-btn:hover {
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .28);
+  }
+
+  .bottombar {
+    color: #a8b3c1;
+  }
+
+  .key-hint {
+    background: #161b22;
+    border-color: #30363d;
+    color: #c9d1d9;
+  }
+
+  .complete,
+  .no-data {
+    background: #161b22;
+    border: 8px solid #21262d;
+    color: var(--text);
+  }
+
+  .complete h2,
+  .no-data h2 {
+    color: #f0f6fc;
+    -webkit-text-fill-color: #f0f6fc;
+  }
+
+  .complete p,
+  .no-data p {
+    color: #a8b3c1;
+  }
+
+  .reset-btn {
+    background: #238636;
+    color: #fff;
+  }
+
+  .demo-banner {
+    background: rgba(187, 128, 9, .11);
+    border-color: rgba(210, 153, 34, .34);
+    color: #e3b341;
+  }
+
+  .demo-banner code {
+    background: rgba(210, 153, 34, .12);
+    color: #f0d98c;
+  }
+
+  @media (max-width: 500px) {
+    .card {
+      border-width: 8px;
+      min-height: 330px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <!-- Filled by JS -->
+</div>
+
+<script>
+// ── Recite Engine ── tick-based, 不背单词-style retry
+const BOX_GAP = {1:2, 2:4, 3:8, 4:16, 5:32};
+const RATING  = { again:0, hard:0, good:+1, easy:+2 };
+
+class ReciteEngine {
+  constructor(data) {
+    this.title = data.title || 'Recite';
+    this.newPerBatch = data.newItemsPerSession || 3;
+    this.items = data.items.map((it, i) => ({
+      id: it.id || i + 1,
+      title: it.title || 'Item ' + (i + 1),
+      importance: it.importance || 1,
+      content_full: it.content_full || '',
+      mnemonic: it.mnemonic || '',
+      hints: it.hints || [],
+      box: 0,
+      at: 0,
+      streak: 0,
+      studied: false,
+    }));
+    this.tick = 0;
+    this.newDone = 0;
+    // load() is called separately by initApp
+  }
+
+  key() { return 'recite-v4-' + this.title.replace(/[^a-z0-9]/gi, '-'); }
+
+  contentHash() {
+    const key = this.items.map(it => it.id + '|' + it.title).join(',');
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) {
+      hash = ((hash << 5) - hash) + key.charCodeAt(i);
+      hash |= 0;
+    }
+    return hash;
+  }
+
+  save() {
+    const s = {
+      tick: this.tick, newDone: this.newDone,
+      hash: this.contentHash(),
+      items: this.items.map(it => ({
+        id: it.id, box: it.box, at: it.at, streak: it.streak, studied: it.studied
+      }))
+    };
+    // Primary: server /progress (survives across EXE restarts)
+    try {
+      fetch('/progress', { method: 'POST', body: JSON.stringify(s),
+        headers: { 'Content-Type': 'application/json' }, keepalive: true });
+    } catch(e) {}
+    // Fallback: localStorage (for file:// mode)
+    try { localStorage.setItem(this.key(), JSON.stringify(s)); } catch(e) {}
+  }
+
+  async load() {
+    const tryRestore = (s) => {
+      if (!s.items || s.items.length !== this.items.length) return false;
+      if (s.hash != null && s.hash !== this.contentHash()) return false;
+      this.tick = s.tick || 0;
+      this.newDone = s.newDone || 0;
+      for (const si of s.items) {
+        const it = this.items.find(x => x.id === si.id);
+        if (it) { it.box = si.box; it.at = si.at; it.streak = si.streak; it.studied = si.studied; }
+      }
+      return true;
+    };
+
+    // Try server /progress first
+    try {
+      const r = await fetch('/progress');
+      if (r.ok) {
+        const s = await r.json();
+        if (tryRestore(s)) return;
+      }
+    } catch(e) {}
+    // Fallback: localStorage
+    try {
+      const raw = localStorage.getItem(this.key());
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (tryRestore(s)) return;
+    } catch(e) {}
+  }
+
+  // ── Scheduler: 不背单词 style ──
+  nextAction() {
+    // 1. Wrong/Hard items need fast retry (at <= tick, box=1 non-studied review)
+    let retry = this.items
+      .filter(it => it.box === 1 && it.at <= this.tick && it.studied)
+      .sort((a, b) => a.at - b.at || a.importance - b.importance);
+    if (retry.length) return { type: 'review', item: retry[0] };
+
+    // 2. Regular review items due now
+    let due = this.items
+      .filter(it => it.box > 0 && it.at <= this.tick)
+      .sort((a, b) => a.at - b.at || a.importance - b.importance);
+    if (due.length) return { type: 'review', item: due[0] };
+
+    // 3. Introduce new items (up to newPerBatch at a time)
+    if (this.newDone < this.newPerBatch) {
+      let fresh = this.items
+        .filter(it => it.box === 0)
+        .sort((a, b) => a.importance - b.importance || a.id - b.id);
+      if (fresh.length) return { type: 'new', item: fresh[0] };
+    }
+
+    // 4. Batch done — reset counter, advance tick to next due
+    this.newDone = 0;
+    let next = this.items
+      .filter(it => it.box > 0 && it.at > this.tick)
+      .sort((a, b) => a.at - b.at);
+    if (next.length) { this.tick = next[0].at; this.save(); return this.nextAction(); }
+
+    // 5. Still box-0 items left? Introduce them
+    let fresh = this.items.filter(it => it.box === 0)
+      .sort((a, b) => a.importance - b.importance || a.id - b.id);
+    if (fresh.length) return { type: 'new', item: fresh[0] };
+
+    return null;
+  }
+
+  introduce(item) {
+    item.box = 1;
+    item.studied = true;
+    this.newDone++;
+    this.save();
+  }
+
+  rate(itemId, rating) {
+    const it = this.items.find(x => x.id === itemId);
+    if (!it) return;
+
+    if (rating === 'again') {
+      // Fast retry — comes back in 1 tick
+      it.at = this.tick + 1;
+      it.box = 1;
+      it.streak = 0;
+    } else if (rating === 'hard') {
+      // Moderate retry — comes back in 2 ticks
+      it.at = this.tick + 2;
+      it.box = Math.max(it.box, 1);
+      it.streak = 0;
+    } else {
+      // Good/Easy — promote box, space out
+      const delta = RATING[rating] || 0;
+      it.box = Math.min(it.box + delta, 5);
+      it.at = this.tick + (BOX_GAP[it.box] || 4);
+      it.streak++;
+    }
+    it.studied = true;
+    this.tick++;
+    this.save();
+  }
+
+  isComplete() { return this.items.every(it => it.box >= 5); }
+
+  progress() {
+    const m = this.items.filter(it => it.box >= 5).length;
+    return { mastered: m, total: this.items.length, pct: Math.round(m / this.items.length * 100) };
+  }
+
+  boxBreakdown() {
+    const bd = {0:0,1:0,2:0,3:0,4:0,5:0};
+    for (const it of this.items) bd[it.box]++;
+    return bd;
+  }
+
+  reset() {
+    for (const it of this.items) { it.box = 0; it.at = 0; it.streak = 0; it.studied = false; }
+    this.tick = 0; this.newDone = 0;
+    // Clear server progress
+    try { fetch('/progress', { method: 'POST', body: '{}',
+      headers: { 'Content-Type': 'application/json' } }); } catch(e) {}
+    // Clear localStorage fallback
+    try { localStorage.removeItem(this.key()); } catch(e) {}
+  }
+}
+
+// ── UI Controller ──
+let engine, currentItem, mode = 'study', revealedHints = [], hintIndex = 0, isDemo = false;
+function $(sel) { return document.querySelector(sel); }
+
+async function initApp() {
+  const params = new URLSearchParams(location.search);
+  const file = params.get('data');
+
+  // (1) If ?data=XXX.json is set, try to load external file
+  if (file) {
+    try {
+      const resp = await fetch(file + '?t=' + Date.now());
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.items && data.items.length) {
+          engine = new ReciteEngine(data);
+          await engine.load();
+          showCard(); return;
+        }
+      }
+    } catch(e) { /* fall through */ }
+  }
+
+  // (2) No ?data= — try ./cards.json (works on HTTP server)
+  if (!file) {
+    try {
+      const resp = await fetch('./cards.json');
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.items && data.items.length) {
+          engine = new ReciteEngine(data);
+          await engine.load();
+          showCard(); return;
+        }
+      }
+    } catch(e) { /* fall through to embedded */ }
+  }
+
+  // (3) Fallback: embedded data (always works, even on file://)
+  const tag = document.getElementById('recite-data');
+  if (tag && tag.textContent.trim()) {
+    try {
+      const data = JSON.parse(tag.textContent);
+      if (data.items && data.items.length) {
+        engine = new ReciteEngine(data);
+        isDemo = true;
+        await engine.load();
+        showCard(); return;
+      }
+    } catch(e) {}
+  }
+
+  // (4) Nothing found
+  showNoData();
+}
+
+function showNoData() {
+  /*
+  2026-06-20 00:00:00 +08:00 Original no-data copy retained:
+  $('#app').innerHTML = `<div class="no-data">
+    <h2>No card data found</h2>
+    <p>Put a <code>cards.json</code> file in the same folder,<br>
+    or open with <code>?data=YOURFILE.json</code> in the URL.</p>
+    <p style="margin-top:12px;font-size:13px;color:var(--text-dim)">
+      Example: recite-player.html?data=马原背诵.json</p>
+  </div>`;
+  */
+  $('#app').innerHTML = `<div class="no-data">
+    <h2>没有找到手卡数据</h2>
+    <p>请把 <code>cards.json</code> 放在同一目录，<br>
+    或使用 <code>?data=YOURFILE.json</code> 指定手卡文件。</p>
+    <p style="margin-top:12px;font-size:13px;color:var(--text-dim)">
+      示例：recite-player.html?data=期末背诵.json</p>
+  </div>`;
+}
+
+function showComplete() {
+  const p = engine.progress(), bd = engine.boxBreakdown();
+  /*
+  2026-06-20 00:00:00 +08:00 Original completion copy retained:
+  $('#app').innerHTML = `<div class="complete">
+    <h2>All mastered!</h2><p>${p.total} items · ${engine.tick} steps</p>
+    <button class="reset-btn" onclick="doReset()">Restart</button></div>`;
+  */
+  $('#app').innerHTML = `<div class="complete">
+    <h2>本组背诵完成</h2><p>${p.total} 张手卡 · ${engine.tick} 次练习</p>
+    <button class="reset-btn" onclick="doReset()">重新开始</button></div>`;
+}
+
+function doReset() { if (engine) engine.reset(); location.reload(); }
+
+function showCard() {
+  if (engine.isComplete()) { showComplete(); return; }
+  const action = engine.nextAction();
+  if (!action) { showComplete(); return; }
+  currentItem = action.item;
+  revealedHints = []; hintIndex = 0;
+  if (action.type === 'new') {
+    engine.introduce(currentItem);
+    mode = 'study';
+  } else {
+    mode = 'test';
+  }
+  renderCard();
+}
+
+function renderCard() {
+  const p = engine.progress(), bd = engine.boxBreakdown(), item = currentItem;
+  // 2026-06-20 00:00:00 +08:00 Original labels retained:
+  // const labels = { study: 'Learn', test: 'Test' };
+  const labels = { study: '学习手卡', test: '默背测试', result: '自评' };
+  $('#app').innerHTML = `
+    <div class="topbar">
+      <span class="title">${esc(engine.title)}</span>
+      <span style="display:flex;align-items:center;gap:12px">
+        <!-- 2026-06-20 00:00:00 +08:00 Original reset label retained:
+        <button onclick="resetProgress()" title="Reset progress" class="reset-nav-btn" aria-label="Reset progress">Reset</button>
+        -->
+        <button onclick="resetProgress()" title="重置背诵进度" class="reset-nav-btn" aria-label="重置背诵进度">重置</button>
+        已掌握 ${p.mastered}/${p.total}
+      </span>
+    </div>
+    ${isDemo ? `<div class="demo-banner"><span><strong>示例手卡</strong>：当前使用内置示例数据。运行 <code>start.bat</code> 后可加载自己的 <code>cards.json</code>。</span></div>` : ''}
+    <div class="boxes">
+      ${[1,2,3,4,5].map(b => {
+        let cls = bd[b] > 0 ? (b >= 5 ? 'box-dot mastered' : 'box-dot active') : 'box-dot';
+        return `<span class="${cls}">盒${b} · ${bd[b]}</span>`;
+      }).join('')}
+    </div>
+    <div class="progress-wrap"><div class="progress-fill" style="width:${p.pct}%"></div></div>
+
+    <div class="card-container"><div class="card" id="card">
+      <div class="card-label">${labels[mode] || ''}</div>
+      <div class="card-title">${esc(item.title)}</div>
+      <div class="card-content" id="cardContent">
+        ${mode === 'study' ? esc(item.content_full) : ''}
+      </div>
+      ${item.mnemonic && mode === 'study' ? `<div class="card-mnemonic">${esc(item.mnemonic)}</div>` : ''}
+
+      <div class="answer-area ${mode === 'test' ? 'show' : ''}" id="answerArea">
+        ${mode === 'test' ? `<input class="answer-input" id="answerInput" placeholder="先默背答案，按 Enter 对照..." autocomplete="off">` : ''}
+        <div id="answerFeedback"></div>
+      </div>
+
+      <div class="hints ${mode === 'test' && item.hints && item.hints.length ? 'show' : ''}" id="hintsArea">
+        ${item.hints && item.hints.length ? `<button class="hint-btn" id="hintBtn" onclick="showHint()">查看提示（${item.hints.length}）</button>` : ''}
+        <div class="hint-text" id="hintText"></div>
+      </div>
+
+      <div class="rating-row" id="ratingRow" style="display:none">
+        <!-- 2026-06-20 00:00:00 +08:00 Original rating copy retained:
+        <button class="rate-btn again" onclick="rate('again')" aria-label="Again — complete blank">1 Again</button>
+        <button class="rate-btn hard" onclick="rate('hard')" aria-label="Hard — major errors">2 Hard</button>
+        <button class="rate-btn good" onclick="rate('good')" aria-label="Good — minor hesitation">3 Good</button>
+        <button class="rate-btn easy" onclick="rate('easy')" aria-label="Easy — instant recall">4 Easy</button>
+        -->
+        <button class="rate-btn again" onclick="rate('again')" aria-label="完全忘记">1 重来</button>
+        <button class="rate-btn hard" onclick="rate('hard')" aria-label="回忆困难">2 困难</button>
+        <button class="rate-btn good" onclick="rate('good')" aria-label="基本记住">3 记住</button>
+        <button class="rate-btn easy" onclick="rate('easy')" aria-label="熟练掌握">4 熟练</button>
+      </div>
+    </div></div>
+
+    <div class="bottombar">
+      ${mode === 'study' ? '<span><span class="key-hint">Enter</span> 开始默背</span>' : ''}
+      ${mode === 'test' ? '<span><span class="key-hint">Enter</span> 对照答案</span>' : ''}
+    </div>`;
+
+  if (mode === 'test') setTimeout(() => { const inp = $('#answerInput'); if (inp) inp.focus(); }, 80);
+}
+
+function showHint() {
+  if (!currentItem || !currentItem.hints || !currentItem.hints.length) return;
+  if (hintIndex < currentItem.hints.length) {
+    revealedHints.push(currentItem.hints[hintIndex]); hintIndex++;
+    const el = $('#hintText');
+    if (el) el.innerHTML = revealedHints.map((h, i) =>
+      `<span style="display:block;margin-bottom:4px">提示 ${i+1}：${esc(h)}</span>`).join('');
+    const btn = $('#hintBtn');
+    if (btn && hintIndex >= currentItem.hints.length) btn.style.display = 'none';
+  }
+}
+
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+
+// ── Keyboard ──
+document.addEventListener('keydown', e => {
+  if (!engine || !currentItem) return;
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (mode === 'study') { mode = 'test'; renderCard(); }
+    else if (mode === 'test') { submitAnswer(); }
+  }
+  if (mode === 'result') {
+    if (e.key === '1') { e.preventDefault(); rate('again'); }
+    else if (e.key === '2') { e.preventDefault(); rate('hard'); }
+    else if (e.key === '3') { e.preventDefault(); rate('good'); }
+    else if (e.key === '4') { e.preventDefault(); rate('easy'); }
+  }
+});
+
+function submitAnswer() {
+  const inp = $('#answerInput'); if (!inp) return;
+  const userAnswer = inp.value.trim();
+  const item = currentItem;
+
+  // Show comparison + rating together on same page
+  const cc = document.getElementById('cardContent');
+  /*
+  2026-06-20 00:00:00 +08:00 Original comparison layout retained:
+  if (cc) cc.innerHTML = `
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:6px">你的默背</div>
+    <div style="background:#f3f1eb;padding:10px 12px;border-radius:6px;margin-bottom:12px;white-space:pre-wrap;font-size:14px;max-height:100px;overflow-y:auto">${esc(userAnswer) || '<span style="color:var(--text-dim)">未填写</span>'}</div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:6px">手卡答案</div>
+    <div style="background:#f7faf7;padding:10px 12px;border-radius:6px;border-left:4px solid var(--green);white-space:pre-wrap;font-size:14px;max-height:150px;overflow-y:auto">${esc(item.content_full)}</div>`;
+  */
+  if (cc) {
+    const answerBlock = userAnswer
+      ? `<div style="background:#f3f1eb;padding:10px 12px;border-radius:6px;margin-bottom:10px;white-space:pre-wrap;font-size:14px;max-height:82px;overflow-y:auto">${esc(userAnswer)}</div>`
+      : '';
+    cc.innerHTML = answerBlock +
+      `<div style="background:#f7faf7;padding:12px 14px;border-radius:6px;border-left:4px solid var(--green);white-space:pre-wrap;font-size:14px;max-height:210px;overflow-y:auto">${esc(item.content_full)}</div>`;
+  }
+
+  // Hide input, show rating
+  const area = $('#answerArea'); if (area) area.innerHTML = '';
+  const rr = $('#ratingRow'); if (rr) rr.style.display = 'flex';
+  // 2026-06-20 00:00:00 +08:00 Original result hints retained:
+  // const bb = $('.bottombar'); if (bb) bb.innerHTML = '<span>Type <span class="key-hint">1-4</span> to rate</span>';
+  // const lbl = $('.card-label'); if (lbl) lbl.textContent = 'Rate';
+  const bb = $('.bottombar'); if (bb) bb.innerHTML = '<span>按 <span class="key-hint">1-4</span> 评价本次背诵</span>';
+  const lbl = $('.card-label'); if (lbl) lbl.textContent = '自评';
+  const card = $('#card'); if (card) card.classList.add('result-card');
+  mode = 'result';
+}
+
+function rate(rating) {
+  if (!currentItem) return;
+  engine.rate(currentItem.id, rating);
+  showCard();
+}
+
+function resetProgress() {
+  if (confirm('是否确认重置进度？此操作不可恢复')) {
+    if (engine) engine.reset();
+    showCard();
+  }
+}
+
+// Signal server to shutdown when browser tab closes
+window.addEventListener('beforeunload', () => {
+  try { navigator.sendBeacon('/shutdown'); } catch(e) {}
+});
+
+window.addEventListener('DOMContentLoaded', initApp);
+</script>
+
+<!-- Fallback embedded data (optional). Player prefers ?data=FILENAME.json or ./cards.json -->
+<script type="application/json" id="recite-data">{"title":"Python 基础知识点","newItemsPerSession":3,"items":[ {"id":1,"title":"Python 中的可变类型与不可变类型","importance":1,"content_full":"不可变类型（Immutable）：int, float, str, tuple, frozenset, bytes\n— 创建后值不可修改，修改操作会创建新对象\n\n可变类型（Mutable）：list, dict, set, bytearray\n— 创建后值可以原地修改，不会创建新对象\n\n关键区别：可变对象作为函数参数时可能被意外修改；不可变对象是 hashable 的，可作为 dict 的 key。","mnemonic":"Tuple字串数不变，列典集可变——tu-stri-num 不，list-dict-set 变","hints":["不可变的可以当 dict 的 key","int, str, tuple 是不可变的，list, dict, set 是可变的" ] },{"id":2,"title":"列表 (list) 与元组 (tuple) 的区别","importance":1,"content_full":"共同点：都是有序序列，支持索引和切片，可包含任意类型元素\n\n区别：\n(1) 可变性：list 可变（增删改），tuple 不可变\n(2) 语法：list 用 []，tuple 用 ()\n(3) 性能：tuple 创建快、占用内存小（结构固定）\n(4) 语义：tuple 通常用于异构数据（类似 C struct），list 用于同构数据\n(5) 安全性：tuple 不可变，适合作为 dict 的 key；list 不行\n(6) 方法：list 有 append/extend/remove/sort 等方法，tuple 只有 count/index","mnemonic":"列表可变方括号，元组固定圆括号；快省安键选元组","hints":["哪个可以当 dict 的 key？","哪种更快更省内存？" ] },{"id":3,"title":"字典 (dict) 的常用操作","importance":2,"content_full":"基本操作：\n- 取值：d['key'] 或 d.get('key', default)\n- 设值：d['key'] = value\n- 删除：del d['key'] 或 d.pop('key')\n- 遍历键：for k in d: 或 d.keys()\n- 遍历值：d.values()\n- 遍历键值对：for k, v in d.items()\n\nPython 3.7+：dict 保持插入顺序（insertion-ordered）\n\n安全取值：d.get('key') 返回 None（不会报 KeyError），d.setdefault('key', default) 不存在时设默认值","mnemonic":"取 get 删 pop，遍历 items 拿键值","hints":["不报错的取值方法是什么？","如何同时遍历键和值？" ] },{"id":4,"title":"Python 函数的参数类型（四种）","importance":1,"content_full":"(1) 位置参数 (positional)：按顺序传入，必须提供\n(2) 默认参数 (default)：def f(a, b=10)，有默认值的参数必须放在没有默认值的后面\n(3) 可变位置参数 (*args)：接收任意多个位置参数，打包为 tuple\n(4) 可变关键字参数 (**kwargs)：接收任意多个关键字参数，打包为 dict\n\n参数顺序（强制）：positional → *args → keyword-only → **kwargs\n\n陷阱：默认参数不要用可变对象（如 def f(lst=[])），因为默认值只在函数定义时计算一次。","mnemonic":"位默可关——四参顺序记心中；默参别用可变物","hints":["四种参数分别是什么？","*args 打包成什么类型？**kwargs 呢？" ] },{"id":5,"title":"类 (class) 与实例 (instance) —— __init__ 和 self","importance":2,"content_full":"class 是对象的蓝图，instance 是根据蓝图创建的具体对象。\n\n__init__(self, ...)：初始化方法（不是构造器——构造器是 __new__），在实例创建后自动调用，用于设置初始属性。\n\nself：代表实例本身，是方法的第一个参数（命名约定，不是关键字）。通过 self 访问实例属性和其他方法。\n\n实例属性 vs 类属性：\n- 实例属性（self.x = val）：每个实例独立\n- 类属性（直接在 class 下定义）：所有实例共享，通过 ClassName.attr 或 self.__class__.attr 访问","mnemonic":"类=蓝图，实例=房子；self=这间房，__init__=装修","hints":["__init__ 和 __new__ 谁是真正的构造器？","类属性和实例属性的区别？" ] },{"id":6,"title":"异常处理 try-except-else-finally","importance":2,"content_full":"结构：\ntry:\n    # 可能出错的代码\nexcept SomeError as e:\n    # 出错时执行\nelse:\n    # try 成功（没出错）时执行\nfinally:\n    # 无论如何都执行（清理资源）\n\n执行顺序：try 成功 → else → finally；try 失败 → except → finally\n\nfinally 的用途：关闭文件、释放锁、断开连接——即使 except 中 return/raise 也会执行。\n\n常见内置异常：ValueError, TypeError, KeyError, IndexError, FileNotFoundError, ZeroDivisionError","mnemonic":"试捕否则终——try试，except捕，else成功，finally终清","hints":["finally 在什么情况下不执行？","else 和 finally 的触发条件有什么区别？" ] },{"id":7,"title":"列表推导式 (List Comprehension)","importance":3,"content_full":"语法：[expression for item in iterable if condition]\n\n等价于：\nresult = []\nfor item in iterable:\n    if condition:\n        result.append(expression)\n\n示例：\n- [x**2 for x in range(10)]  → [0,1,4,9,...,81]\n- [x for x in lst if x > 0]  → 过滤正数\n- [x if x>0 else 0 for x in lst]  → 带条件表达式\n\n还有 dict comprehension：{k:v for k,v in pairs}\nset comprehension：{x for x in seq}","mnemonic":"表for条件——expression先写，for在中，if在尾","hints":["条件放在 for 之前还是之后？","dict 和 set 也有推导式吗？" ] },{"id":8,"title":"装饰器 (Decorator) 的概念","importance":3,"content_full":"装饰器是一个接受函数作为参数、返回新函数的可调用对象（通常是闭包或类）。用于在不修改原函数代码的情况下，给函数添加额外功能。\n\n基本结构：\ndef my_decorator(func):\n    def wrapper(*args, **kwargs):\n        # 前置操作（如日志、计时、权限检查）\n        result = func(*args, **kwargs)\n        # 后置操作\n        return result\n    return wrapper\n\n使用：@my_decorator（语法糖，等价于 func = my_decorator(func)）\n\n常见用途：日志记录、性能计时、权限校验、缓存（@lru_cache）、静态方法（@staticmethod）、类方法（@classmethod）","mnemonic":"装饰=函数套函数，@语法是糖；外收原函，内返新果","hints":["@decorator 等价于什么？","wrapper 中用什么参数保证通用性？" ] } ] }</script>
+
+</body>
+</html>

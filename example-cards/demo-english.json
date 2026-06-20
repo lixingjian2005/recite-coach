@@ -1,0 +1,94 @@
+{
+  "title": "英语易混词与短语动词",
+  "newItemsPerSession": 3,
+  "items": [
+    {
+      "id": 1,
+      "title": "affect vs effect",
+      "importance": 1,
+      "content_full": "affect（动词）= 影响、使产生变化\n  • The weather affects my mood.\n  • How will this affect the outcome?\n\neffect（名词）= 效果、影响、结果\n  • The medicine had a strong effect.\n  • The new policy is now in effect.\n\neffect（动词，较正式）= 实现、引起\n  • We need to effect change.\n\n记忆关键：affect = Action（动词，A开头），effect = End result（名词，E = End）",
+      "mnemonic": "RAVEN: Remember, Affect = Verb, Effect = Noun",
+      "hints": [
+        "哪个是动词？想一想 A for Action",
+        "大多数情况：a____ 是动词，e____ 是名词"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "principal vs principle",
+      "importance": 1,
+      "content_full": "principal（名词）= 校长、负责人；本金\n  • The principal of the school.\n  • principal and interest（本金和利息）\n\nprincipal（形容词）= 主要的、最重要的\n  • The principal reason.\n\nprinciple（仅名词）= 原则、原理、准则\n  • A matter of principle.\n  • the basic principles of physics.\n\n记忆关键：principal 结尾是 pal（朋友）→ 校长是你的 pal；principle 结尾是 ple → 和 rule 一样是规则",
+      "mnemonic": "The principal is your pal. A principle is a rule.",
+      "hints": [
+        "校长/负责人是哪一个？",
+        "结尾是 -ple 的是原则，那 -pal 呢？"
+      ]
+    },
+    {
+      "id": 3,
+      "title": "their / there / they're",
+      "importance": 1,
+      "content_full": "their（物主代词）= 他们的\n  • Their house is big.\n  • I like their ideas.\n\nthere（副词）= 那里、那边\n  • Put it over there.\n  • There is a problem.（存在句：There be...）\n\nthey're = they are 的缩写\n  • They're coming at 6.\n\n替换测试：\n- 能替换成 \"they are\" → they're\n- 指地点或存在句 → there\n- 表示所属 → their",
+      "mnemonic": "tHERE — HERE is in tHERE (地点); tHEIR — HEIR has possessions (所属)",
+      "hints": [
+        "试试把它替换成 'they are'，通顺吗？",
+        "指地点的是哪个？里面有 'here' 这个词"
+      ]
+    },
+    {
+      "id": 4,
+      "title": "lie vs lay（最常混淆）",
+      "importance": 1,
+      "content_full": "lie（不及物）= 躺、位于、在于（过去式 lay，过去分词 lain）\n  • I lie on the bed. → I lay on the bed yesterday. → I have lain here for hours.\n\nlay（及物）= 放置、下蛋（过去式 laid，过去分词 laid）\n  • Lay the book on the table. → I laid the book there. → I have laid the book down.\n\n记忆关键：lie 不需要宾语（自己躺），lay 需要宾语（放某物）。\n\nlie（说谎）又是另一个词：过去式 lied，过去分词 lied。",
+      "mnemonic": "Lay (put) takes an object — Lay something down. Lie (recline) doesn't — Just lie down.",
+      "hints": [
+        "需要宾语（放什么）的是 lay，不需要宾语的是 lie",
+        "躺下的过去式是什么？想一下 'Yesterday I ____ on the bed'"
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Phrasal Verbs: PUT（短语动词）",
+      "importance": 2,
+      "content_full": "put off = 推迟、拖延\n  • Don't put off your homework.\n\nput up with = 忍受、容忍\n  • I can't put up with the noise.\n\nput out = 熄灭；使不方便\n  • Put out the fire. / I hope I'm not putting you out.\n\nput through = 接通（电话）；使经历\n  • Let me put you through to the manager.\n\nput forward = 提出（建议）\n  • She put forward a new proposal.\n\nput away = 收好、放回原位\n  • Put away your toys.",
+      "mnemonic": "off=推开→推迟，up with=举着→忍受，out=火灭了，through=电话接通",
+      "hints": [
+        "\"推迟\"用 put 怎么说？",
+        "put up with 是接受还是忍受？"
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Phrasal Verbs: GET（短语动词）",
+      "importance": 2,
+      "content_full": "get along (with) = 相处融洽\n  • Do you get along with your coworkers?\n\nget over = 克服、从...恢复\n  • It took months to get over the illness.\n\nget through = 完成、度过；接通电话\n  • I got through all the work. / I can't get through to him.\n\nget by = 勉强过活、凑合\n  • We don't have much money, but we get by.\n\nget away with = 逃脱惩罚\n  • He got away with cheating.\n\nget around to = 终于抽出时间做\n  • I'll get around to it eventually.",
+      "mnemonic": "along=相处，over=翻过障碍，through=穿过去，by=凑合过，away with=溜了",
+      "hints": [
+        "克服困难用 get 怎么说？",
+        "get by 和 get through 的区别？"
+      ]
+    },
+    {
+      "id": 7,
+      "title": "compliment vs complement",
+      "importance": 2,
+      "content_full": "compliment（名词/动词）= 称赞、赞美\n  • She gave me a nice compliment.\n  • He complimented her on the presentation.\n\ncomplement（名词/动词）= 补充、使完善\n  • The wine is a perfect complement to the cheese.\n  • The two skills complement each other.\n\n记忆关键：complIment = I like（我喜欢→赞美）；complement = complete（完善、补充）",
+      "mnemonic": "I like a compl**i**ment. Things that compl**e**ment compl**e**te each other.",
+      "hints": [
+        "哪个和 'praise'（赞美）同义？",
+        "哪个和 'complete'（完善）相关？注意中间的字母"
+      ]
+    },
+    {
+      "id": 8,
+      "title": "fewer vs less",
+      "importance": 3,
+      "content_full": "fewer = 用于可数名词（countable nouns）\n  • fewer people, fewer cars, fewer mistakes\n\nless = 用于不可数名词（uncountable nouns）\n  • less water, less money, less time\n\n例外（实际用法）：\n- 时间、金钱、距离、重量等计量单位通常用 less：less than $20, less than 5 miles\n- 超市 '10 items or less' 很常见（虽然语法上应该是 fewer）\n\n实用规则：能数清楚的用 fewer，数不清的用 less。不确定时，less 更通用。",
+      "mnemonic": "Fewer = Few = Countable. Less = Mass (uncountable).",
+      "hints": [
+        "如果能数出具体数量（1,2,3...），用哪个？",
+        "对于钱和时间，习惯上用 less 还是 fewer？"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+# User study data
+# 2026-06-20 00:00:00 +08:00 Original rule retained:
+# cards.json
+# cards.json is now the public demo deck. Keep local/private decks under
+# names that match the patterns below.
+.recite-progress.json
+*.local.json
+private-*.json
+*.pdf
+
+# Python
+__pycache__/
+.venv/
+*.pyc
+*.pyo
+
+# Build outputs (go to GitHub Releases, not repo)
+dist/
+*.exe
+
+# IDE / local config
+.claude/
+.vscode/
+.idea/

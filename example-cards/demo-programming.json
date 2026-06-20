@@ -1,0 +1,94 @@
+{
+  "title": "Python 基础知识点",
+  "newItemsPerSession": 3,
+  "items": [
+    {
+      "id": 1,
+      "title": "Python 中的可变类型与不可变类型",
+      "importance": 1,
+      "content_full": "不可变类型（Immutable）：int, float, str, tuple, frozenset, bytes\n— 创建后值不可修改，修改操作会创建新对象\n\n可变类型（Mutable）：list, dict, set, bytearray\n— 创建后值可以原地修改，不会创建新对象\n\n关键区别：可变对象作为函数参数时可能被意外修改；不可变对象是 hashable 的，可作为 dict 的 key。",
+      "mnemonic": "Tuple字串数不变，列典集可变——tu-stri-num 不，list-dict-set 变",
+      "hints": [
+        "不可变的可以当 dict 的 key",
+        "int, str, tuple 是不可变的，list, dict, set 是可变的"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "列表 (list) 与元组 (tuple) 的区别",
+      "importance": 1,
+      "content_full": "共同点：都是有序序列，支持索引和切片，可包含任意类型元素\n\n区别：\n(1) 可变性：list 可变（增删改），tuple 不可变\n(2) 语法：list 用 []，tuple 用 ()\n(3) 性能：tuple 创建快、占用内存小（结构固定）\n(4) 语义：tuple 通常用于异构数据（类似 C struct），list 用于同构数据\n(5) 安全性：tuple 不可变，适合作为 dict 的 key；list 不行\n(6) 方法：list 有 append/extend/remove/sort 等方法，tuple 只有 count/index",
+      "mnemonic": "列表可变方括号，元组固定圆括号；快省安键选元组",
+      "hints": [
+        "哪个可以当 dict 的 key？",
+        "哪种更快更省内存？"
+      ]
+    },
+    {
+      "id": 3,
+      "title": "字典 (dict) 的常用操作",
+      "importance": 2,
+      "content_full": "基本操作：\n- 取值：d['key'] 或 d.get('key', default)\n- 设值：d['key'] = value\n- 删除：del d['key'] 或 d.pop('key')\n- 遍历键：for k in d: 或 d.keys()\n- 遍历值：d.values()\n- 遍历键值对：for k, v in d.items()\n\nPython 3.7+：dict 保持插入顺序（insertion-ordered）\n\n安全取值：d.get('key') 返回 None（不会报 KeyError），d.setdefault('key', default) 不存在时设默认值",
+      "mnemonic": "取 get 删 pop，遍历 items 拿键值",
+      "hints": [
+        "不报错的取值方法是什么？",
+        "如何同时遍历键和值？"
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Python 函数的参数类型（四种）",
+      "importance": 1,
+      "content_full": "(1) 位置参数 (positional)：按顺序传入，必须提供\n(2) 默认参数 (default)：def f(a, b=10)，有默认值的参数必须放在没有默认值的后面\n(3) 可变位置参数 (*args)：接收任意多个位置参数，打包为 tuple\n(4) 可变关键字参数 (**kwargs)：接收任意多个关键字参数，打包为 dict\n\n参数顺序（强制）：positional → *args → keyword-only → **kwargs\n\n陷阱：默认参数不要用可变对象（如 def f(lst=[])），因为默认值只在函数定义时计算一次。",
+      "mnemonic": "位默可关——四参顺序记心中；默参别用可变物",
+      "hints": [
+        "四种参数分别是什么？",
+        "*args 打包成什么类型？**kwargs 呢？"
+      ]
+    },
+    {
+      "id": 5,
+      "title": "类 (class) 与实例 (instance) —— __init__ 和 self",
+      "importance": 2,
+      "content_full": "class 是对象的蓝图，instance 是根据蓝图创建的具体对象。\n\n__init__(self, ...)：初始化方法（不是构造器——构造器是 __new__），在实例创建后自动调用，用于设置初始属性。\n\nself：代表实例本身，是方法的第一个参数（命名约定，不是关键字）。通过 self 访问实例属性和其他方法。\n\n实例属性 vs 类属性：\n- 实例属性（self.x = val）：每个实例独立\n- 类属性（直接在 class 下定义）：所有实例共享，通过 ClassName.attr 或 self.__class__.attr 访问",
+      "mnemonic": "类=蓝图，实例=房子；self=这间房，__init__=装修",
+      "hints": [
+        "__init__ 和 __new__ 谁是真正的构造器？",
+        "类属性和实例属性的区别？"
+      ]
+    },
+    {
+      "id": 6,
+      "title": "异常处理 try-except-else-finally",
+      "importance": 2,
+      "content_full": "结构：\ntry:\n    # 可能出错的代码\nexcept SomeError as e:\n    # 出错时执行\nelse:\n    # try 成功（没出错）时执行\nfinally:\n    # 无论如何都执行（清理资源）\n\n执行顺序：try 成功 → else → finally；try 失败 → except → finally\n\nfinally 的用途：关闭文件、释放锁、断开连接——即使 except 中 return/raise 也会执行。\n\n常见内置异常：ValueError, TypeError, KeyError, IndexError, FileNotFoundError, ZeroDivisionError",
+      "mnemonic": "试捕否则终——try试，except捕，else成功，finally终清",
+      "hints": [
+        "finally 在什么情况下不执行？",
+        "else 和 finally 的触发条件有什么区别？"
+      ]
+    },
+    {
+      "id": 7,
+      "title": "列表推导式 (List Comprehension)",
+      "importance": 3,
+      "content_full": "语法：[expression for item in iterable if condition]\n\n等价于：\nresult = []\nfor item in iterable:\n    if condition:\n        result.append(expression)\n\n示例：\n- [x**2 for x in range(10)]  → [0,1,4,9,...,81]\n- [x for x in lst if x > 0]  → 过滤正数\n- [x if x>0 else 0 for x in lst]  → 带条件表达式\n\n还有 dict comprehension：{k:v for k,v in pairs}\nset comprehension：{x for x in seq}",
+      "mnemonic": "表for条件——expression先写，for在中，if在尾",
+      "hints": [
+        "条件放在 for 之前还是之后？",
+        "dict 和 set 也有推导式吗？"
+      ]
+    },
+    {
+      "id": 8,
+      "title": "装饰器 (Decorator) 的概念",
+      "importance": 3,
+      "content_full": "装饰器是一个接受函数作为参数、返回新函数的可调用对象（通常是闭包或类）。用于在不修改原函数代码的情况下，给函数添加额外功能。\n\n基本结构：\ndef my_decorator(func):\n    def wrapper(*args, **kwargs):\n        # 前置操作（如日志、计时、权限检查）\n        result = func(*args, **kwargs)\n        # 后置操作\n        return result\n    return wrapper\n\n使用：@my_decorator（语法糖，等价于 func = my_decorator(func)）\n\n常见用途：日志记录、性能计时、权限校验、缓存（@lru_cache）、静态方法（@staticmethod）、类方法（@classmethod）",
+      "mnemonic": "装饰=函数套函数，@语法是糖；外收原函，内返新果",
+      "hints": [
+        "@decorator 等价于什么？",
+        "wrapper 中用什么参数保证通用性？"
+      ]
+    }
+  ]
+}
