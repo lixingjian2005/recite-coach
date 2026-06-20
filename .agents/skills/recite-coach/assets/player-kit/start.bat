@@ -1,3 +1,3 @@
 @echo off
 cd /d "%~dp0"
-start /B pythonw serve.py
+start /B python serve.py
