@@ -1325,12 +1325,14 @@ function renderContent(s, options) {
 
   // Step 6: restore code placeholders
   html = html.replace(new RegExp(S + 'C(\\d+)' + S, 'g'), function(_, i) {
-    return '<code>' + codes[+i] + '</code>';
+    var idx = +i;
+    return idx < codes.length ? '<code>' + codes[idx] + '</code>' : '';
   });
 
   // Step 7: restore math placeholders
   html = html.replace(new RegExp(S + 'M(\\d+)' + S, 'g'), function(_, i) {
-    return '<span class="card-math">' + maths[+i] + '</span>';
+    var idx = +i;
+    return idx < maths.length ? '<span class="card-math">' + maths[idx] + '</span>' : '';
   });
 
   return html;
