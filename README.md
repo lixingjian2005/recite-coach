@@ -60,6 +60,14 @@ Recite Coach separates the two jobs:
 
 ## Quick start
 
+### Install the Skill
+
+```bash
+npx skills add lixingjian2005/recite-coach
+```
+
+This installs the `recite-coach` skill for Claude Code, Codex, GitHub Copilot, and other compatible agents. After installation, agents can turn PDFs, notes, and lecture material into `cards.json` automatically.
+
 ### If you already have `cards.json`
 
 Put `cards.json` in the project root, next to `serve.py`, then start the local player.
@@ -90,11 +98,17 @@ The browser opens automatically. Use `Enter` to move from study to recall, then 
 
 ### If you only have a PDF, notes, or lecture material
 
-Use the Skill workflow first:
+Install the skill first:
 
-1. Ask Codex/Claude to use `recite-coach`.
-2. Let the agent extract a score-point memorization list from the full material.
-3. Let the agent convert that list into `cards.json`.
+```bash
+npx skills add lixingjian2005/recite-coach
+```
+
+Then use the Skill workflow:
+
+1. Ask your agent (Claude Code / Codex / Copilot) to use `recite-coach`.
+2. The agent will extract a score-point memorization list from the full material.
+3. The agent will convert that list into `cards.json`.
 4. Put `cards.json` in the project root.
 5. Start the local player with one of the commands above.
 
