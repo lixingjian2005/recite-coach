@@ -24,11 +24,15 @@ Raw materials (PDF / TXT / MD / pasted text)
                ▼
 ┌─────────────────────────────────┐
 │ Phase 2: CARDS                  │
-│ Score points → cards.json       │
+│ Score points → cards.md         │
 │ One concept per card:           │
 │ Q + A + mnemonic + hints        │
 └──────────────┬──────────────────┘
-               │ cards.json
+               │ cards.md
+               ▼
+       deploy-player-kit.py
+       (auto-converts to cards.json)
+               │
                ▼
        local player launcher
 ```
@@ -40,7 +44,7 @@ Raw materials (PDF / TXT / MD / pasted text)
    - If it needs extraction → go through **Phase 1** first, then **Phase 2**
    - If already concise → skip to **Phase 2** directly
 3. Show the final card preview (first 3 cards + summary stats), get user confirmation
-4. Write `cards.json` to the output directory
+4. Write `cards.md` to the output directory
 5. Deploy the player kit by running `python recite-coach/assets/deploy-player-kit.py <output-directory>`
 
 ## Output Directory and Player Kit
@@ -52,7 +56,8 @@ If the user explicitly names an output directory, use that directory. Do not def
 The final output directory must contain:
 
 ```text
-cards.json
+cards.md              (you write this — see format below)
+cards.json            (auto-generated from cards.md)
 recite-player.html
 serve.py
 start.bat
@@ -60,15 +65,20 @@ start.vbs
 start.sh
 ```
 
-**REQUIRED: After writing `cards.json`, deploy the player kit with this exact command:**
+**REQUIRED: After writing `cards.md`, deploy the player kit with this exact command:**
 
 ```bash
 python recite-coach/assets/deploy-player-kit.py <output-directory>
 ```
 
-Replace `<output-directory>` with the same directory where you wrote `cards.json`.
+Replace `<output-directory>` with the same directory where you wrote `cards.md`.
 
-The deploy script copies all player kit files (`serve.py`, `recite-player.html`, `start.bat`, `start.vbs`, `start.sh`) and verifies the output. Do not copy files manually.
+The deploy script:
+1. Auto-detects `cards.md` and converts it to valid `cards.json` (via `md2cards.py`).
+2. Copies all player kit files (`serve.py`, `recite-player.html`, `start.bat`, `start.vbs`, `start.sh`) into the output directory.
+3. Validates the output directory is complete.
+
+Do NOT copy files manually. Do NOT write `cards.json` directly — write `cards.md` and let the deploy script handle the conversion.
 
 Do not write generated decks into the installed skill directory. Do not tell the user to hunt for launcher files. The player reads `cards.json` from the same directory as `serve.py`.
 
@@ -185,27 +195,34 @@ Guideline: in a typical set, ~40% should be importance=1, ~40% importance=2, ~20
 - **Hint 2 (or last):** Very close to the answer — a keyword or first part (e.g., "The first characteristic is 客...")
 - At least 1 hint for importance=1 cards
 
-### Output: `cards.json`
+### Output: `cards.md`
 
-```json
-{
-  "title": "卡片集标题",
-  "newItemsPerSession": 3,
-  "items": [
-    {
-      "id": 1,
-      "title": "What is X?",
-      "importance": 1,
-      "content_full": "X is ...\n\nKey points:\n(1) ...\n(2) ...",
-      "mnemonic": "一三五记心中",
-      "hints": ["Hint 1", "Hint 2"]
-    }
-  ]
-}
+```markdown
+# 卡片集标题
+
+> **newItemsPerSession**: 3
+
+---
+
+## 1. What is X?
+> importance: 1
+> mnemonic: 一三五记心中
+> hints:
+> - Hint 1
+> - Hint 2
+
+X is ...
+
+Key points:
+(1) ...
+(2) ...
 ```
 
-- `id`: sequential integer starting from 1
-- `newItemsPerSession`: how many new cards to introduce per batch. Default 3. Use 2 for very dense/difficult material, 3-4 for lighter material.
+- `id`: sequential integer starting from 1 (specified in `## N.`)
+- `newItemsPerSession`: batch size, default 3. Use 2 for dense material, 3-4 for lighter material.
+- **Never write `---` inside card content.** Describe dividers with words instead.
+- **No JSON escaping needed.** Write English `""`, Chinese `""`, or any text directly.
+- **Metadata must come before body text.** `> importance:`, `> mnemonic:`, `> hints:` go right after `## N. Title`, before the answer content.
 
 ### Workflow
 
@@ -216,24 +233,24 @@ Guideline: in a typical set, ~40% should be importance=1, ~40% importance=2, ~20
    - Importance breakdown: 1: X, 2: Y, 3: Z
    - Title: "XXX"
 4. **Ask for confirmation** — user can request edits before writing the file
-5. **Write** to `cards.json` (or user-specified filename) in the output directory using the Write tool
+5. **Write** to `cards.md` (or user-specified filename) in the output directory using the Write tool
 6. **Deploy the player kit** by running:
    ```bash
    python recite-coach/assets/deploy-player-kit.py <output-directory>
    ```
-   This copies all 5 player files and verifies the output. Do NOT skip this step.
-   If this step fails, fix the error and re-run. The user needs these files to launch the player.
-7. **Verify** the output directory contains all 6 files:
-   `cards.json`, `serve.py`, `recite-player.html`, `start.bat`, `start.vbs`, `start.sh`
+   This converts `cards.md` → `cards.json`, copies all 5 player files, and verifies the output. Do NOT skip this step.
+   If conversion fails, read the error messages (they include line numbers), fix `cards.md`, and re-run.
+7. **Verify** the output directory contains all 7 files:
+   `cards.md`, `cards.json`, `serve.py`, `recite-player.html`, `start.bat`, `start.vbs`, `start.sh`
 
 ### After generation
 
 Tell the user:
-- File saved to: `cards.json`
-- Player files deployed to the same output directory (verify all 6 files: `cards.json`, `serve.py`, `recite-player.html`, `start.bat`, `start.vbs`, `start.sh`)
+- File saved to: `cards.md` (auto-converted to `cards.json`)
+- Player files deployed to the same output directory (verify all 7 files: `cards.md`, `cards.json`, `serve.py`, `recite-player.html`, `start.bat`, `start.vbs`, `start.sh`)
 - Launch with `start.bat`, `start.vbs`, `./start.sh`, or `python serve.py`
 - Do not recommend directly double-clicking `recite-player.html` as the primary workflow
-- They can edit the JSON anytime to fix/add/remove cards — the HTML stays unchanged
+- They can edit `cards.md` anytime to fix/add/remove cards and re-run the deploy script — the HTML stays unchanged
 - Review privacy and copyright before publishing or sharing the deck
 
 ## Card Quality Checklist
@@ -247,4 +264,4 @@ Before writing the file, verify:
 - [ ] Mnemonics are short and actually helpful (not just restating the title)
 - [ ] `content_full` is scannable (lists > paragraphs)
 - [ ] IDs are sequential and unique
-- [ ] The JSON is valid (no trailing commas, proper escaping)
+- [ ] `cards.md` follows the format rules: `---` only as card separator (never inside content), `## N.` header on every card, `> importance:` set on every card, metadata comes before body text

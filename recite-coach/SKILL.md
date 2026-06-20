@@ -21,7 +21,8 @@ Do not default to the PDF's source directory. A PDF may live in Downloads, a tem
 The final output directory must contain:
 
 ```text
-cards.json
+cards.md              (you write this — see format below)
+cards.json            (auto-generated from cards.md)
 recite-player.html
 serve.py
 start.bat
@@ -29,17 +30,21 @@ start.vbs
 start.sh
 ```
 
-**REQUIRED — After writing `cards.json`, you MUST deploy the player kit.**  
+**REQUIRED — After writing `cards.md`, you MUST deploy the player kit.**  
 Run this command exactly:
 
 ```bash
 python recite-coach/assets/deploy-player-kit.py <output-directory>
 ```
 
-Replace `<output-directory>` with the same directory where you wrote `cards.json`.
+Replace `<output-directory>` with the same directory where you wrote `cards.md`.
 
-Do NOT manually copy individual player kit files one by one. Always use the deploy script.  
-The deploy script copies all 5 player kit files and verifies the output directory is complete.
+The deploy script:
+1. Auto-detects `cards.md` and converts it to valid `cards.json` (via `md2cards.py`).
+2. Copies all 5 player kit files into the output directory.
+3. Validates the output directory is complete.
+
+Do NOT manually copy individual player kit files one by one. Do NOT write `cards.json` directly — write `cards.md` and let the deploy script handle the conversion.
 
 This player kit is the stable launch entry for generated decks. Do not ask the user to find launcher files manually, and do not write `cards.json` into the installed skill directory.
 
@@ -67,43 +72,68 @@ Use `recite-coach/card-generator/SKILL.md`.
 The required two-stage pipeline is:
 
 1. **Score-point extraction**: full material -> compact score-point memorization list.
-2. **Card generation**: score-point list -> `cards.json`.
+2. **Card generation**: score-point list -> `cards.md`.
 
 Do not treat Phase 1 as a generic summary. It must remove filler and keep testable, recitable, scoring content.
 
 ## Card Data Format
 
-```json
-{
-  "title": "Deck title",
-  "newItemsPerSession": 3,
-  "items": [
-    {
-      "id": 1,
-      "title": "Question or concept title",
-      "importance": 1,
-      "content_full": "Complete answer...",
-      "mnemonic": "Memory aid",
-      "hints": ["Hint 1", "Hint 2"]
-    }
-  ]
-}
+Cards are authored as **structured markdown** (`cards.md`). The deploy script automatically converts `cards.md` to valid `cards.json` — you never write JSON by hand. This eliminates JSON quoting issues (Chinese/English quotation marks, unescaped quotes) completely.
+
+### Markdown Template
+
+```markdown
+# Deck Title Here
+
+> **newItemsPerSession**: 3
+
+---
+
+## 1. Question or concept title
+> importance: 1
+> mnemonic: Short memory aid (optional)
+> hints:
+> - First hint (optional)
+> - Second hint (optional)
+
+Answer content here. Plain text or markdown.
+
+Supports **bold**, *italic*, `code`, $math$.
+
+Can span multiple paragraphs.
+No JSON escaping — "" "" all fine.
+
+---
+
+## 2. Another concept
+> importance: 2
+...
 ```
 
-Fields:
+### Format Rules
 
-- `title`: deck name shown by the player.
-- `newItemsPerSession`: number of new cards introduced per learning batch.
-- `items[].id`: unique sequential integer starting from 1.
-- `items[].title`: short question or concept prompt.
-- `items[].importance`: `1` core, `2` important, `3` supplemental.
-- `items[].content_full`: concise score-point answer, preferably scannable.
-- `items[].mnemonic`: optional memory aid.
-- `items[].hints`: optional progressive hints.
+**Deck-level:**
+- `# <text>` (first h1) → deck title (required)
+- `> **newItemsPerSession**: N` → batch size (optional, default 3)
+
+**Cards:**
+- `---` on a line by itself → separates cards
+- `## N. <text>` → card with id=N, question title (required)
+- `> importance: N` → 1=core, 2=important, 3=supplemental (required, default 1)
+- `> mnemonic: <text>` → memory aid (optional, default "")
+- `> hints:` followed by `> - <text>` lines → progressive hints (optional)
+- Everything else between `## N.` and the next `---` → answer content (supports inline markdown)
+
+### Critical Rules
+
+- **Never use `---` inside card content.** If content needs a divider, describe it with words.
+- **No JSON quoting needed.** Write English `""`, Chinese `""`, or any text directly.
+- **Metadata comes first.** `> importance:`, `> mnemonic:`, and `> hints:` must appear before body text.
+- **Content supports markdown.** `**bold**`, `*italic*`, `` `code` ``, `$math$` are rendered by the player.
 
 ## Local Player Launch Instructions
 
-After `cards.json` is ready and the player kit has been copied into the same directory, tell the user the exact output directory and launch method.
+After `cards.md` has been written and the deploy script has converted it to `cards.json` and copied the player kit, tell the user the exact output directory and launch method.
 
 Windows:
 
@@ -161,7 +191,7 @@ Before delivering a deck:
 - Important cards have at least one useful hint.
 - Answers are concise enough to review quickly.
 - Mnemonics help recall rather than restating the title.
-- JSON is valid and has no trailing commas.
+- `cards.md` follows the format rules above: `---` only as card separator, `## N.` header on every card, `> importance:` set on every card, no `---` inside content.
 
 ## Safety Notes
 
@@ -175,7 +205,7 @@ Remind the user when relevant:
 
 Tell the user:
 
-- where `cards.json` was saved;
+- where `cards.md` was saved (and that it was converted to `cards.json`);
 - where the player kit was copied;
 - deck title and card count;
 - that they should launch with `start.bat`, `start.vbs`, `./start.sh`, or `python serve.py`;

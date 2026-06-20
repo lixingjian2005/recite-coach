@@ -5,7 +5,9 @@
 # names that match the patterns below.
 .recite-progress.json
 *.local.json
+*.local.md
 private-*.json
+private-*.md
 *.pdf
 
 # Python
