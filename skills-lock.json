@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "recite-coach": {
+      "source": "lixingjian2005/recite-coach",
+      "sourceType": "github",
+      "skillPath": "recite-coach/SKILL.md",
+      "computedHash": "038c986ea77c3595b6f87cb4088e7ff0723ac60eccbf943a88cee61b731ecfa4"
+    }
+  }
+}
