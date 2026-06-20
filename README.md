@@ -1,12 +1,12 @@
 <div align="center">
 
-# Recite Coach: local flashcards for exam memorization
+# Recite Coach: PDF-to-Flashcards Skill and Local Leitner Player
 
 **Turn PDFs and notes into score-point flashcards, then review them locally in your browser.**
 
 <br />
 
-[![Star this repo](https://img.shields.io/github/stars/lixingjian2005/recite-coach-draft?style=for-the-badge&logo=github&label=Star%20this%20repo&color=yellow)](https://github.com/lixingjian2005/recite-coach-draft/stargazers)
+[![Star this repo](https://img.shields.io/github/stars/lixingjian2005/recite-coach?style=for-the-badge&logo=github&label=Star%20this%20repo&color=yellow)](https://github.com/lixingjian2005/recite-coach/stargazers)
 
 <br />
 
@@ -252,6 +252,6 @@ If Recite Coach is useful to you, starring the repo helps other learners find it
 
 <br />
 
-[![Star this repo](https://img.shields.io/github/stars/lixingjian2005/recite-coach-draft?style=for-the-badge&logo=github&label=Star%20this%20repo&color=yellow)](https://github.com/lixingjian2005/recite-coach-draft/stargazers)
+[![Star this repo](https://img.shields.io/github/stars/lixingjian2005/recite-coach?style=for-the-badge&logo=github&label=Star%20this%20repo&color=yellow)](https://github.com/lixingjian2005/recite-coach/stargazers)
 
 </div>
