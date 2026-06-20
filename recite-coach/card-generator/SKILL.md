@@ -40,7 +40,33 @@ Raw materials (PDF / TXT / MD / pasted text)
    - If it needs extraction → go through **Phase 1** first, then **Phase 2**
    - If already concise → skip to **Phase 2** directly
 3. Show the final card preview (first 3 cards + summary stats), get user confirmation
-4. Write `cards.json` to the project directory
+4. Write `cards.json` to the output directory
+5. Copy the bundled player kit into the same output directory
+
+## Output Directory and Player Kit
+
+Default output directory: the user's current project root.
+
+If the user explicitly names an output directory, use that directory. Do not default to the PDF's source directory unless the user asks for that.
+
+The final output directory must contain:
+
+```text
+cards.json
+recite-player.html
+serve.py
+start.bat
+start.vbs
+start.sh
+```
+
+Copy the launch files from:
+
+```text
+recite-coach/assets/player-kit/
+```
+
+Do not write generated decks into the installed skill directory. Do not tell the user to hunt for launcher files. The player reads `cards.json` from the same directory as `serve.py`.
 
 ## Phase 1: Score-Point Extraction
 
@@ -186,13 +212,14 @@ Guideline: in a typical set, ~40% should be importance=1, ~40% importance=2, ~20
    - Importance breakdown: 1: X, 2: Y, 3: Z
    - Title: "XXX"
 4. **Ask for confirmation** — user can request edits before writing the file
-5. **Write** to `cards.json` (or user-specified filename) using the Write tool
+5. **Write** to `cards.json` (or user-specified filename) in the output directory using the Write tool
+6. **Copy** the bundled player kit into the same output directory
 
 ### After generation
 
 Tell the user:
 - File saved to: `cards.json`
-- To use: put `cards.json` in the project root next to `serve.py`
+- Player files copied to the same output directory
 - Launch with `start.bat`, `start.vbs`, `./start.sh`, or `python serve.py`
 - Do not recommend directly double-clicking `recite-player.html` as the primary workflow
 - They can edit the JSON anytime to fix/add/remove cards — the HTML stays unchanged

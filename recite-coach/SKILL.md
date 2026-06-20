@@ -12,6 +12,31 @@ Recite Coach is a two-part workflow:
 
 The skill creates and validates the deck. The local web app reads the deck and runs the memorization session.
 
+## Output Directory Rule
+
+Always create the final review package in the user's current project root, unless the user explicitly specifies another output directory.
+
+Do not default to the PDF's source directory. A PDF may live in Downloads, a temp folder, or a course-material folder that is not the working project.
+
+The final output directory must contain:
+
+```text
+cards.json
+recite-player.html
+serve.py
+start.bat
+start.vbs
+start.sh
+```
+
+Copy the player files from this skill's bundled player kit:
+
+```text
+recite-coach/assets/player-kit/
+```
+
+This player kit is the stable launch entry for generated decks. Do not ask the user to find launcher files manually, and do not write `cards.json` into the installed skill directory.
+
 ## When to Use
 
 Use this skill when the user wants to:
@@ -72,7 +97,7 @@ Fields:
 
 ## Local Player Launch Instructions
 
-After `cards.json` is ready, tell the user to put it in the project root next to `serve.py`, then launch the player with one of these methods:
+After `cards.json` is ready and the player kit has been copied into the same directory, tell the user the exact output directory and launch method.
 
 Windows:
 
@@ -95,6 +120,8 @@ python serve.py
 ```
 
 `recite-player.html` is the player file, not the recommended launch entry. Do not tell the user to directly double-click it as the primary workflow, because `file://` mode may not reliably load the latest `cards.json` and does not provide the same file-backed progress behavior.
+
+The launcher reads `cards.json` from its own directory. This is why `cards.json`, `serve.py`, `recite-player.html`, and the start scripts must be placed together.
 
 ## Scheduling Model
 
@@ -143,6 +170,7 @@ Remind the user when relevant:
 Tell the user:
 
 - where `cards.json` was saved;
+- where the player kit was copied;
 - deck title and card count;
 - that they should launch with `start.bat`, `start.vbs`, `./start.sh`, or `python serve.py`;
 - that `cards.template.json` can restore the demo deck format;
