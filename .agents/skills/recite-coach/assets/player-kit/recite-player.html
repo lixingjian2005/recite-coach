@@ -159,6 +159,25 @@
     border-bottom: 2px dashed var(--accent);
     margin: 0 4px; padding: 2px 10px; color: var(--accent);
   }
+  .card-content code {
+    font-family: "SF Mono", "Cascadia Code", "Fira Code", monospace;
+    font-size: 0.88em;
+    background: rgba(255,255,255,.06);
+    padding: 1px 5px; border-radius: 3px;
+  }
+  .card-content strong { color: #fff; font-weight: 700; }
+  .card-content .card-math {
+    font-family: "Latin Modern Math", "Cambria Math", "Times New Roman", serif;
+    font-style: italic; color: var(--blue); padding: 0 1px;
+  }
+  .card-mnemonic strong { color: #ffe066; font-weight: 700; }
+  .card-mnemonic code {
+    font-family: "SF Mono", "Cascadia Code", "Fira Code", monospace;
+    font-size: 0.88em;
+    background: rgba(255,255,255,.06);
+    padding: 1px 5px; border-radius: 3px;
+  }
+  .card-mnemonic .card-math { color: var(--blue); }
   .card-mnemonic {
     margin-top: 24px; padding: 16px 20px;
     background: rgba(240,75,106,.06);
@@ -521,6 +540,12 @@
     border-bottom-color: var(--accent);
     color: var(--accent);
   }
+  .card-content code { background: #ece9e1; color: #3d3a34; }
+  .card-content strong { color: #24231f; }
+  .card-content .card-math { color: var(--accent); }
+  .card-mnemonic strong { color: #8a6c18; }
+  .card-mnemonic code { background: #e4dcc5; color: #60480f; }
+  .card-mnemonic .card-math { color: var(--accent); }
 
   .card-mnemonic {
     margin-top: 22px;
@@ -777,6 +802,12 @@
     border-bottom-color: #58a6ff;
     color: #79c0ff;
   }
+  .card-content code { background: rgba(240,246,252,.06); color: #e6edf3; }
+  .card-content strong { color: #f0f6fc; }
+  .card-content .card-math { color: var(--blue); }
+  .card-mnemonic strong { color: #f0d98c; }
+  .card-mnemonic code { background: rgba(210,153,34,.10); color: #f0d98c; }
+  .card-mnemonic .card-math { color: var(--blue); }
 
   .card-mnemonic {
     background: rgba(187, 128, 9, .10);
@@ -1202,10 +1233,8 @@ function renderCard() {
     <div class="card-container"><div class="card" id="card">
       <div class="card-label">${labels[mode] || ''}</div>
       <div class="card-title">${esc(item.title)}</div>
-      <div class="card-content" id="cardContent">
-        ${mode === 'study' ? esc(item.content_full) : ''}
-      </div>
-      ${item.mnemonic && mode === 'study' ? `<div class="card-mnemonic">${esc(item.mnemonic)}</div>` : ''}
+      <div class="card-content" id="cardContent">${mode === 'study' ? renderContent(item.content_full) : ''}</div>
+      ${item.mnemonic && mode === 'study' ? `<div class="card-mnemonic">${renderContent(item.mnemonic)}</div>` : ''}
 
       <div class="answer-area ${mode === 'test' ? 'show' : ''}" id="answerArea">
         ${mode === 'test' ? `<input class="answer-input" id="answerInput" placeholder="先默背答案，按 Enter 对照..." autocomplete="off">` : ''}
@@ -1256,6 +1285,57 @@ function esc(s) {
   const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
 }
 
+function renderContent(s, options) {
+  if (!s) return '';
+  const opt = Object.assign({ bold: true, italic: true, code: true, math: true }, options || {});
+
+  // Step 1: HTML-escape (same as esc)
+  const d = document.createElement('div'); d.textContent = s;
+  let html = d.innerHTML;
+
+  const S = '\x00';
+
+  // Step 2: extract inline code before bold/italic touches it
+  const codes = [];
+  if (opt.code) {
+    html = html.replace(/`([^`]+)`/g, function(_, code) {
+      codes.push(code);
+      return S + 'C' + (codes.length - 1) + S;
+    });
+  }
+
+  // Step 3: extract inline math $...$
+  const maths = [];
+  if (opt.math) {
+    html = html.replace(/\$([^$]+)\$/g, function(_, math) {
+      maths.push(math);
+      return S + 'M' + (maths.length - 1) + S;
+    });
+  }
+
+  // Step 4: **bold**
+  if (opt.bold) {
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  }
+
+  // Step 5: *italic* (after bold — won't match inside <strong> because its text content still has literal * chars)
+  if (opt.italic) {
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  }
+
+  // Step 6: restore code placeholders
+  html = html.replace(new RegExp(S + 'C(\\d+)' + S, 'g'), function(_, i) {
+    return '<code>' + codes[+i] + '</code>';
+  });
+
+  // Step 7: restore math placeholders
+  html = html.replace(new RegExp(S + 'M(\\d+)' + S, 'g'), function(_, i) {
+    return '<span class="card-math">' + maths[+i] + '</span>';
+  });
+
+  return html;
+}
+
 // ── Keyboard ──
 document.addEventListener('keydown', e => {
   if (!engine || !currentItem) return;
@@ -1289,10 +1369,10 @@ function submitAnswer() {
   */
   if (cc) {
     const answerBlock = userAnswer
-      ? `<div style="background:#f3f1eb;padding:10px 12px;border-radius:6px;margin-bottom:10px;white-space:pre-wrap;font-size:14px;max-height:82px;overflow-y:auto">${esc(userAnswer)}</div>`
+      ? `<div style="background:#1c2128;color:#f0f6fc;padding:10px 12px;border-radius:6px;margin-bottom:10px;white-space:pre-wrap;font-size:14px;max-height:82px;overflow-y:auto">${esc(userAnswer)}</div>`
       : '';
     cc.innerHTML = answerBlock +
-      `<div style="background:#f7faf7;padding:12px 14px;border-radius:6px;border-left:4px solid var(--green);white-space:pre-wrap;font-size:14px;max-height:210px;overflow-y:auto">${esc(item.content_full)}</div>`;
+      `<div style="background:#12261a;color:#f0f6fc;padding:12px 14px;border-radius:6px;border-left:4px solid var(--green);white-space:pre-wrap;font-size:14px;max-height:210px;overflow-y:auto">${renderContent(item.content_full)}</div>`;
   }
 
   // Hide input, show rating
